@@ -1,0 +1,16 @@
+{
+  "name": "dat-offchain-ipfs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "dat": "^13.13.0",
+    "ipfs": "^0.35.0"
+  }
+}
