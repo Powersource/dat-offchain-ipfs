@@ -4,7 +4,7 @@ const ipfs = new ipfsConstructor()
 
 ipfs.on('ready', async () => {
     console.log('ipfs is ready:', ipfs)
-    const readme = await ipfs.cat('QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme')
+    const dir = await ipfs.addFromFs('./test-content/', { recursive: true, hidden: true })
 
-    console.log("readme:", readme.toString())
+    console.log(dir)
 })
