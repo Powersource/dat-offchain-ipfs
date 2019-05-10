@@ -8,7 +8,7 @@ exports.host = dir => new Promise((res, rej) => {
 
   ipfs.on('ready', async () => {
 
-    Dat('./.hash-storage/', async (err, dat) => {
+    Dat('./.host-storage/', async (err, dat) => {
       if (err) rej(err)
 
       function update () {
@@ -17,7 +17,7 @@ exports.host = dir => new Promise((res, rej) => {
 
           const dirHash = dirInfo[dirInfo.length - 1].hash
 
-          fs.writeFile('./.hash-storage/ipfs-hash.txt', dirHash, err => {
+          fs.writeFile('./.host-storage/ipfs-hash.txt', dirHash, err => {
             if (err) rej(err)
 
             dat.importFiles({ watch: true })
@@ -32,5 +32,32 @@ exports.host = dir => new Promise((res, rej) => {
 
       res({ link: 'dat://' + dat.key.toString('hex'), update: update })
     })
+  })
+})
+
+exports.seed = (dir, link) => new Promise((res, rej) => {
+
+  const ipfs = new IPFS()
+
+  ipfs.on('ready', async () => {
+
+    Dat('./.seed-storage/', { key: link }, async (err, dat) => {
+      if (err) rej(err)
+
+      dat.joinNetwork()
+
+      const stats = dat.trackStats()
+
+      stats.on('update', () => {
+        const newStats = stats.get()
+        console.log('stats', newStats)
+      })
+
+      res()
+    })
+  })
+
+  ipfs.on('error', err => {
+    throw err
   })
 })
