@@ -1,12 +1,16 @@
 const fs = require('fs')
-const IPFS = require('ipfs')
+const IPFSFactory = require('ipfsd-ctl')
+//const IPFS = require('ipfs')
 const Dat = require('dat')
 
 exports.host = dir => new Promise((res, rej) => {
 
-  const ipfs = new IPFS()
+  const f = IPFSFactory.create({ type: 'js' })
 
-  ipfs.on('ready', async () => {
+  f.spawn((err, ipfsd) => {
+    if (err) return rej(err)
+
+    const ipfs = ipfsd.api
 
     Dat('./.host-storage/', async (err, dat) => {
       if (err) rej(err)
@@ -37,12 +41,17 @@ exports.host = dir => new Promise((res, rej) => {
 
 exports.seed = (dir, link) => new Promise((res, rej) => {
 
-  const ipfs = new IPFS()
+  let lastVersion = -1
 
-  ipfs.on('ready', async () => {
+  const f = IPFSFactory.create({ type: 'js' })
+
+  f.spawn((err, ipfsd) => {
+    if (err) return rej(err)
+
+    const ipfs = ipfsd.api
 
     Dat('./.seed-storage/', { key: link }, async (err, dat) => {
-      if (err) rej(err)
+      if (err) return rej(err)
 
       dat.joinNetwork()
 
@@ -51,13 +60,16 @@ exports.seed = (dir, link) => new Promise((res, rej) => {
       stats.on('update', () => {
         const newStats = stats.get()
         console.log('stats', newStats)
+        // The # of blocks will only be 1, so we only need to check that we've
+        // downloaded that one
+        if (newStats.version > lastVersion && newStats.downloaded === 1) {
+          //TODO: dl files using ipfs
+          console.log('dl')
+          lastVersion = newStats.version
+        }
       })
 
       res()
     })
-  })
-
-  ipfs.on('error', err => {
-    throw err
   })
 })
