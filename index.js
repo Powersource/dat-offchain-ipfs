@@ -2,26 +2,35 @@ const fs = require('fs')
 const IPFS = require('ipfs')
 const Dat = require('dat')
 
-// exports.init = functi
-const ipfs = new IPFS()
+exports.host = dir => new Promise((res, rej) => {
 
-ipfs.on('ready', async () => {
-  const dir = await ipfs.addFromFs('./test-content/', { recursive: true, hidden: true })
+  const ipfs = new IPFS()
 
-  console.log(dir)
+  ipfs.on('ready', async () => {
 
-  const dirHash = dir[dir.length - 1].hash
+    Dat('./.hash-storage/', async (err, dat) => {
+      if (err) rej(err)
 
-  fs.writeFile('./.hash-storage/ipfs-hash.txt', dirHash, err => {
-    if (err) throw err
+      function update () {
+        return new Promise(async (res, rej) => {
+          const dirInfo = await ipfs.addFromFs(dir, { recursive: true, hidden: true })
 
-    Dat('./.hash-storage/', (err, dat) => {
-      if (err) throw err
+          const dirHash = dirInfo[dirInfo.length - 1].hash
 
-      dat.importFiles({ watch: true })
-      dat.joinNetwork()
+          fs.writeFile('./.hash-storage/ipfs-hash.txt', dirHash, err => {
+            if (err) rej(err)
 
-      console.log('My Dat link is: dat://' + dat.key.toString('hex'))
+            dat.importFiles({ watch: true })
+            dat.joinNetwork()
+
+            res()
+          })
+        })
+      }
+
+      await update()
+
+      res({ link: 'dat://' + dat.key.toString('hex'), update: update })
     })
   })
 })
