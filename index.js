@@ -1,7 +1,8 @@
 const fs = require('fs')
 const IPFSFactory = require('ipfsd-ctl')
-//const IPFS = require('ipfs')
 const Dat = require('dat')
+const pull = require('pull-stream')
+const pullWriteFile = require('pull-write-file')
 
 exports.host = dir => new Promise((res, rej) => {
 
@@ -13,7 +14,7 @@ exports.host = dir => new Promise((res, rej) => {
     const ipfs = ipfsd.api
 
     Dat('./.host-storage/', async (err, dat) => {
-      if (err) rej(err)
+      if (err) return rej(err)
 
       function update () {
         return new Promise(async (res, rej) => {
@@ -22,7 +23,7 @@ exports.host = dir => new Promise((res, rej) => {
           const dirHash = dirInfo[dirInfo.length - 1].hash
 
           fs.writeFile('./.host-storage/ipfs-hash.txt', dirHash, err => {
-            if (err) rej(err)
+            if (err) return rej(err)
 
             dat.importFiles({ watch: true })
             dat.joinNetwork()
@@ -63,8 +64,12 @@ exports.seed = (dir, link) => new Promise((res, rej) => {
         // The # of blocks will only be 1, so we only need to check that we've
         // downloaded that one
         if (newStats.version > lastVersion && newStats.downloaded === 1) {
-          //TODO: dl files using ipfs
           console.log('dl')
+          fs.readFile('./.seed-storage/ipfs-hash.txt', 'utf8', (err, hash) => {
+            if (err) throw err
+
+            ipfsToDisk(ipfs, hash, dir)
+          })
           lastVersion = newStats.version
         }
       })
@@ -73,3 +78,42 @@ exports.seed = (dir, link) => new Promise((res, rej) => {
     })
   })
 })
+
+function ipfsToDisk (ipfs, hash, topDir) {
+  const dirs = []
+  const files = []
+  pull(
+    ipfs.getPullStream(hash),
+    pull.drain(obj => {
+      if ('content' in obj) {
+        files.push(obj)
+      } else {
+        dirs.push(obj)
+      }
+    }, () => {
+      let madeDirs = 0
+      dirs.forEach(dirObj => {
+        const dirPath = dirObj.path.indexOf('/') === -1 ?
+          '/' :
+          dirObj.path.substring(dirObj.path.indexOf('/'))
+        fs.mkdir(topDir + dirPath, { recursive: true }, err => {
+          if (err) throw err
+
+          madeDirs++
+          if (madeDirs === dirs.length) {
+            files.forEach(fileObj => {
+              const filePath = fileObj.path.substring(fileObj.path.indexOf('/'))
+              pull(
+                fileObj.content,
+                pullWriteFile(topDir + filePath, err => {
+                  if (err) throw err
+                  console.log('wrote', filePath)
+                })
+              )
+            })
+          }
+        })
+      })
+    })
+  )
+}

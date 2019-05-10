@@ -6,5 +6,5 @@ offchain.host('./test-content/').then(({ link, update }) => {
     setInterval(async () => {
         console.log('updating')
         await update()
-    }, 5000)
+    }, 10000)
 })
