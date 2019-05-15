@@ -60,17 +60,23 @@ exports.seed = (dir, link) => new Promise((res, rej) => {
 
       stats.on('update', () => {
         const newStats = stats.get()
-        console.log('stats', newStats)
+        //console.log('stats', newStats)
         // The # of blocks will only be 1, so we only need to check that we've
         // downloaded that one
         if (newStats.version > lastVersion && newStats.downloaded === 1) {
           console.log('dl')
+
+          setTimeout(()=>{
           fs.readFile('./.seed-storage/ipfs-hash.txt', 'utf8', (err, hash) => {
-            if (err) throw err
+            if (err) {
+              console.error("Can't find the file", err)
+              return
+            }
 
             ipfsToDisk(ipfs, hash, dir)
+            lastVersion = newStats.version
           })
-          lastVersion = newStats.version
+          }, 500)
         }
       })
 
