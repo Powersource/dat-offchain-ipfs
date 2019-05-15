@@ -7,7 +7,12 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Powersource/dat-offchain-ipfs.git"
+  },
+  "homepage": "https://github.com/Powersource/dat-offchain-ipfs",
+  "author": "Jacob Karlsson <jacob.karlsson95@gmail.com> (https://jacob-karlsson.com)",
   "license": "MPL-2.0",
   "dependencies": {
     "dat": "^13.13.0",
