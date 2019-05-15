@@ -14,7 +14,7 @@ What the module does it that when you call `host`/`update`, it adds your dir to 
 
 ## Trying it out
 
-In on terminal/on one computer, create a dir `test-content/` with some files in it. Run `node examples/host.js`
+In one terminal/on one computer, create a dir `test-content/` with some files in it. Run `node examples/host.js`
 
 Take the dat link that host.js prints to another terminal/computer and run `node examples/seed.js <the dat link>`
 
